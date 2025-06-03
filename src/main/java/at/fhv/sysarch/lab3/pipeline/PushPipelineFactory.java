@@ -9,40 +9,51 @@ import javafx.animation.AnimationTimer;
 public class PushPipelineFactory {
     public static AnimationTimer createPipeline(PipelineData pd) {
 
+        // TODO: push from the source (model)
+        // TODO 1. perform model-view transformation from model to VIEW SPACE coordinates
+        // TODO 2. perform backface culling in VIEW SPACE
+        // TODO 3. perform depth sorting in VIEW SPACE
         ModelData modelData = new ModelData();
         ModelTransformation modelTransform = new ModelTransformation();
         ViewingTransformation viewTransform = new ViewingTransformation();
         BackfaceCulling backfaceCulling = new BackfaceCulling();
         DepthSorting depthSorting = new DepthSorting();
+        Coloring coloring = new Coloring(pd.getModelColor());
+
         Renderer renderer = new Renderer(pd.getGraphicsContext(), pd.getModelColor());
 
-        modelData.setSuccessor(modelTransform);
-        modelTransform.setSuccessor(viewTransform);
-        viewTransform.setSuccessor(backfaceCulling);
-        backfaceCulling.setSuccessor(depthSorting);
-        depthSorting.setSuccessor(renderer);
-
-        // TODO: push from the source (model)
-
-        // TODO 1. perform model-view transformation from model to VIEW SPACE coordinates
-
-        // TODO 2. perform backface culling in VIEW SPACE
-
-        // TODO 3. perform depth sorting in VIEW SPACE
-
         // TODO 4. add coloring (space unimportant)
-
         // lighting can be switched on/off
         if (pd.isPerformLighting()) {
-            // 4a. TODO perform lighting in VIEW SPACE
 
+            Lighting lighting = new Lighting(pd.getLightPos());
+
+            modelData.setSuccessor(modelTransform);
+            modelTransform.setSuccessor(viewTransform);
+            viewTransform.setSuccessor(backfaceCulling);
+            backfaceCulling.setSuccessor(depthSorting);
+            depthSorting.setSuccessor(coloring);
+            coloring.setSuccessor(lighting);
+            lighting.setSuccessor(renderer);
+
+
+
+            // 4a. TODO perform lighting in VIEW SPACE
             // 5. TODO perform projection transformation on VIEW SPACE coordinates
         } else {
+            
+            modelData.setSuccessor(modelTransform);
+            modelTransform.setSuccessor(viewTransform);
+            viewTransform.setSuccessor(backfaceCulling);
+            backfaceCulling.setSuccessor(depthSorting);
+            depthSorting.setSuccessor(coloring);
+            coloring.setSuccessor(renderer);
+
+
             // 5. TODO perform projection transformation
         }
 
         // TODO 6. perform perspective division to screen coordinates
-
         // TODO 7. feed into the sink (renderer)
 
         // returning an animation renderer which handles clearing of the
@@ -67,18 +78,11 @@ public class PushPipelineFactory {
                 modelData.run(model);
                 depthSorting.flush();
 
-
-
                 // TODO compute rotation in radians
-
                 // TODO create new model rotation matrix using pd.modelRotAxis
-
                 // TODO compute updated model-view tranformation
-
                 // TODO update model-view filter
-
                 // TODO trigger rendering of the pipeline
-
             }
         };
     }
