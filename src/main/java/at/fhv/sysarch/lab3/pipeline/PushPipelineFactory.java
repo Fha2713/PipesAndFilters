@@ -2,10 +2,26 @@ package at.fhv.sysarch.lab3.pipeline;
 
 import at.fhv.sysarch.lab3.animation.AnimationRenderer;
 import at.fhv.sysarch.lab3.obj.Model;
+import at.fhv.sysarch.lab3.pipeline.filters.*;
+import com.hackoeur.jglm.Mat4;
 import javafx.animation.AnimationTimer;
 
 public class PushPipelineFactory {
     public static AnimationTimer createPipeline(PipelineData pd) {
+
+        ModelData modelData = new ModelData();
+        ModelTransformation modelTransform = new ModelTransformation();
+        ViewingTransformation viewTransform = new ViewingTransformation();
+        BackfaceCulling backfaceCulling = new BackfaceCulling();
+        DepthSorting depthSorting = new DepthSorting();
+        Renderer renderer = new Renderer(pd.getGraphicsContext(), pd.getModelColor());
+
+        modelData.setSuccessor(modelTransform);
+        modelTransform.setSuccessor(viewTransform);
+        viewTransform.setSuccessor(backfaceCulling);
+        backfaceCulling.setSuccessor(depthSorting);
+        depthSorting.setSuccessor(renderer);
+
         // TODO: push from the source (model)
 
         // TODO 1. perform model-view transformation from model to VIEW SPACE coordinates
@@ -19,7 +35,7 @@ public class PushPipelineFactory {
         // lighting can be switched on/off
         if (pd.isPerformLighting()) {
             // 4a. TODO perform lighting in VIEW SPACE
-            
+
             // 5. TODO perform projection transformation on VIEW SPACE coordinates
         } else {
             // 5. TODO perform projection transformation
@@ -34,13 +50,24 @@ public class PushPipelineFactory {
         return new AnimationRenderer(pd) {
             // TODO rotation variable goes in here
 
+            private float rotation = 0.0f;
+
+
             /** This method is called for every frame from the JavaFX Animation
-             * system (using an AnimationTimer, see AnimationRenderer). 
+             * system (using an AnimationTimer, see AnimationRenderer).
              * @param fraction the time which has passed since the last render call in a fraction of a second
-             * @param model    the model to render 
+             * @param model    the model to render
              */
             @Override
             protected void render(float fraction, Model model) {
+                rotation += (float) (fraction * 2 * Math.PI / 10) % 360;
+                Mat4 rotated = modelTransform.rotate(rotation, pd.getModelRotAxis());
+                Mat4 translated = modelTransform.translate(rotated, pd.getModelTranslation());
+                modelTransform.viewTranslate(translated, pd.getViewTransform());
+                modelData.run(model);
+                depthSorting.flush();
+
+
 
                 // TODO compute rotation in radians
 
