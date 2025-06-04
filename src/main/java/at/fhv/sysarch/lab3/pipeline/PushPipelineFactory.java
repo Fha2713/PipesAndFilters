@@ -41,7 +41,7 @@ public class PushPipelineFactory {
             // 4a. TODO perform lighting in VIEW SPACE
             // 5. TODO perform projection transformation on VIEW SPACE coordinates
         } else {
-            
+
             modelData.setSuccessor(modelTransform);
             modelTransform.setSuccessor(viewTransform);
             viewTransform.setSuccessor(backfaceCulling);
