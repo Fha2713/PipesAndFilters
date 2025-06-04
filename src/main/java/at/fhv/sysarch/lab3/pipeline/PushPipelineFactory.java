@@ -20,7 +20,6 @@ public class PushPipelineFactory {
         DepthSorting depthSorting = new DepthSorting();
         FlatShading flatShading = new FlatShading(pd.getLightPos(), pd.getModelColor());
         ProjectionTransformation projectionTransformation = new ProjectionTransformation(pd.getProjTransform());
-        //ScreenSpaceTransformation screenSpaceTransformation = new ScreenSpaceTransformation(pd.getViewportTransform(), pd.getViewHeight());
         PerspectiveDivision perspectiveDivision = new PerspectiveDivision();
         ViewportTransformation viewportTransformation = new ViewportTransformation(pd.getViewportTransform(), pd.getViewHeight());
 
@@ -41,7 +40,6 @@ public class PushPipelineFactory {
             flatShading.setSuccessor(projectionTransformation);
         }
         projectionTransformation.setSuccessor(perspectiveDivision);
-        //screenSpaceTransformation.setSuccessor(renderer);
 
         perspectiveDivision.setSuccessor(viewportTransformation);
         viewportTransformation.setSuccessor(renderer);
@@ -70,9 +68,9 @@ public class PushPipelineFactory {
                 rotation += (float) (fraction * 2 * Math.PI / 10);
 
                 Mat4 scaleMatrix = new Mat4(
-                        new Vec4(0.8f, 0f, 0f, 0f),
-                        new Vec4(0f, 0.8f, 0f, 0f),
-                        new Vec4(0f, 0f, 0.8f, 0f),
+                        new Vec4(1f, 0f, 0f, 0f),
+                        new Vec4(0f, 1f, 0f, 0f),
+                        new Vec4(0f, 0f, 1f, 0f),
                         new Vec4(0f, 0f, 0f, 1f)
                 );
 

@@ -6,10 +6,11 @@ import com.hackoeur.jglm.Mat4;
 import com.hackoeur.jglm.Vec4;
 import javafx.scene.paint.Color;
 
-public class ProjectionTransformation implements IPushFilter<Pair<Face, Color>> {
+public class ProjectionTransformation implements IPushFilter<Pair<Face, Color>>, IPullFilter<Pair<Face, Color>> {
 
     private final Mat4 projMatrix;
     private IPushFilter<Pair<Face, Color>> successor;
+    private IPullFilter<Pair<Face, Color>> predecessor;
 
     public ProjectionTransformation(Mat4 projMatrix) {
         this.projMatrix = projMatrix;
@@ -22,6 +23,28 @@ public class ProjectionTransformation implements IPushFilter<Pair<Face, Color>> 
 
     @Override
     public void push(Pair<Face, Color> input) {
+        Pair<Face, Color> output = transform(input);
+        if (successor != null) {
+            successor.push(output);
+        }
+    }
+
+    @Override
+    public void setPredecessor(IPullFilter<?> predecessor) {
+        this.predecessor = (IPullFilter<Pair<Face, Color>>) predecessor;
+    }
+
+    @Override
+    public Pair<Face, Color> pull() {
+        if (predecessor == null) return null;
+
+        Pair<Face, Color> input = predecessor.pull();
+        if (input == null) return null;
+
+        return transform(input);
+    }
+
+    private Pair<Face, Color> transform(Pair<Face, Color> input) {
         Face face = input.fst();
         Color color = input.snd();
 
@@ -31,6 +54,6 @@ public class ProjectionTransformation implements IPushFilter<Pair<Face, Color>> 
 
         Face transformed = new Face(v1, v2, v3, face.getN1(), face.getN2(), face.getN3());
 
-        successor.push(new Pair<>(transformed, color));
+        return new Pair<>(transformed, color);
     }
 }

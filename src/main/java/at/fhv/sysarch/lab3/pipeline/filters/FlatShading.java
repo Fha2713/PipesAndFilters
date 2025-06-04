@@ -6,9 +6,10 @@ import javafx.scene.paint.Color;
 import com.hackoeur.jglm.Vec3;
 import at.fhv.sysarch.lab3.pipeline.data.Pair;
 
-public class FlatShading implements IPushFilter<Face> {
+public class FlatShading implements IPushFilter<Face>, IPullFilter<Pair<Face, Color>> {
 
     private IPushFilter<Pair<Face, Color>> successor;
+    private IPullFilter<Face> predecessor;
     private final Vec3 lightPos;
     private final Color modelColor;
 
@@ -17,6 +18,7 @@ public class FlatShading implements IPushFilter<Face> {
         this.modelColor = modelColor;
     }
 
+    // === Push-Seite ===
     @Override
     public void setSuccessor(IPushFilter<?> successor) {
         this.successor = (IPushFilter<Pair<Face, Color>>) successor;
@@ -32,6 +34,22 @@ public class FlatShading implements IPushFilter<Face> {
         }
     }
 
+    // === Pull-Seite ===
+    @Override
+    public void setPredecessor(IPullFilter<?> predecessor) {
+        this.predecessor = (IPullFilter<Face>) predecessor;
+    }
+
+    @Override
+    public Pair<Face, Color> pull() {
+        Face face = predecessor.pull();
+        if (face == null) return null;
+
+        Color shadedColor = applyFlatShading(face, lightPos, modelColor);
+        return new Pair<>(face, shadedColor);
+    }
+
+    // --- Hilfsmethoden ---
     private Color applyFlatShading(Face face, Vec3 lightPos, Color baseColor) {
         Vec3 faceNormal = calculateFaceNormal(face);
         Vec3 lightDirection = lightPos.subtract(face.getV1().toVec3()).getUnitVector();

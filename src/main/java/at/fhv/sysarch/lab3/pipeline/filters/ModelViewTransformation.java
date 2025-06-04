@@ -3,38 +3,21 @@ package at.fhv.sysarch.lab3.pipeline.filters;
 import at.fhv.sysarch.lab3.obj.Face;
 import com.hackoeur.jglm.*;
 
-public class ModelViewTransformation implements IPushFilter<Face> {
+public class ModelViewTransformation implements IPushFilter<Face>, IPullFilter<Face> {
 
-    private IPushFilter<Face> successor;
     private Mat4 modelViewMatrix;
-    //private Mat4 viewTransformed = null;
-
-    public Mat4 rotate(float rad, Vec3 modelRotAxis) {
-        return Matrices.rotate(rad, modelRotAxis);
-    }
-
-//    private Mat4 scale(float factor) {
-//        return new Mat4(
-//                new Vec4(factor, 0, 0, 0),
-//                new Vec4(0, factor, 0, 0),
-//                new Vec4(0, 0, factor, 0),
-//                new Vec4(0, 0, 0, 1)
-//        );
-//    }
-
-//    public Mat4 translate(Mat4 rotated, Mat4 modelTranslation) {
-//        //Mat4 scaled = scale(50f);
-//        return modelTranslation.multiply(rotated);
-//    }
-//
-//    public void viewTranslate(Mat4 translated, Mat4 viewTransform) {
-//        this.viewTransformed = viewTransform.multiply(translated);
-//    }
+    private IPushFilter<Face> successor;
+    private IPullFilter<Face> predecessor;
 
     public void setModelViewMatrix(Mat4 modelViewMatrix) {
         this.modelViewMatrix = modelViewMatrix;
     }
 
+    public Mat4 rotate(float rad, Vec3 modelRotAxis) {
+        return Matrices.rotate(rad, modelRotAxis);
+    }
+
+    // --- Push ---
     @Override
     public void setSuccessor(IPushFilter<?> successor) {
         this.successor = (IPushFilter<Face>) successor;
@@ -42,15 +25,29 @@ public class ModelViewTransformation implements IPushFilter<Face> {
 
     @Override
     public void push(Face face) {
-        Vec4 v1new = modelViewMatrix.multiply(face.getV1());
-        Vec4 v2new = modelViewMatrix.multiply(face.getV2());
-        Vec4 v3new = modelViewMatrix.multiply(face.getV3());
-        Vec4 n1new = modelViewMatrix.multiply(face.getN1());
-        Vec4 n2new = modelViewMatrix.multiply(face.getN2());
-        Vec4 n3new = modelViewMatrix.multiply(face.getN3());
+        Vec4 v1 = modelViewMatrix.multiply(face.getV1());
+        Vec4 v2 = modelViewMatrix.multiply(face.getV2());
+        Vec4 v3 = modelViewMatrix.multiply(face.getV3());
 
-        Face transformedFace = new Face(v1new, v3new, v2new, n1new, n3new, n2new);
+        Face transformed = new Face(v1, v2, v3, face.getN1(), face.getN2(), face.getN3());
+        successor.push(transformed);
+    }
 
-        successor.push(transformedFace);
+    // --- Pull ---
+    @Override
+    public void setPredecessor(IPullFilter<?> predecessor) {
+        this.predecessor = (IPullFilter<Face>) predecessor;
+    }
+
+    @Override
+    public Face pull() {
+        Face face = predecessor.pull();
+        if (face == null) return null;
+
+        Vec4 v1 = modelViewMatrix.multiply(face.getV1());
+        Vec4 v2 = modelViewMatrix.multiply(face.getV2());
+        Vec4 v3 = modelViewMatrix.multiply(face.getV3());
+
+        return new Face(v1, v2, v3, face.getN1(), face.getN2(), face.getN3());
     }
 }

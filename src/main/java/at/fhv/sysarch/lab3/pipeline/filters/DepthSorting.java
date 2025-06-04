@@ -4,13 +4,18 @@ import at.fhv.sysarch.lab3.obj.Face;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
-public class DepthSorting implements IPushFilter<Face> {
+public class DepthSorting implements IPushFilter<Face>, IPullFilter<Face> {
 
     private final List<Face> faceBuffer = new ArrayList<>();
     private IPushFilter<Face> successor;
+    private IPullFilter<Face> predecessor;
 
+    private Iterator<Face> sortedIterator = null;
+
+    // === Push ===
     @Override
     public void setSuccessor(IPushFilter<?> successor) {
         this.successor = (IPushFilter<Face>) successor;
@@ -18,20 +23,52 @@ public class DepthSorting implements IPushFilter<Face> {
 
     @Override
     public void push(Face face) {
-        faceBuffer.add(face);  // Nur zwischenspeichern
+        faceBuffer.add(face);  // Zwischenspeichern
     }
 
-    /**
-     * Diese Methode muss explizit vom aufrufenden System pro Frame aufgerufen werden.
-     */
     public void flush() {
-        faceBuffer.sort(Comparator.comparingDouble(this::averageDepth).reversed());
-        for (Face face : faceBuffer) {
+        sortBuffer();
+        while (sortedIterator.hasNext()) {
+            Face face = sortedIterator.next();
             if (successor != null) {
                 successor.push(face);
             }
         }
         faceBuffer.clear();
+        sortedIterator = null;
+    }
+
+    // === Pull ===
+    @Override
+    public void setPredecessor(IPullFilter<?> predecessor) {
+        this.predecessor = (IPullFilter<Face>)predecessor;
+    }
+
+    @Override
+    public Face pull() {
+        if (sortedIterator == null || !sortedIterator.hasNext()) {
+            fillAndSortFromPredecessor();
+        }
+
+        return (sortedIterator != null && sortedIterator.hasNext())
+                ? sortedIterator.next()
+                : null;
+    }
+
+    private void fillAndSortFromPredecessor() {
+        faceBuffer.clear();
+        if (predecessor == null) return;
+
+        Face face;
+        while ((face = predecessor.pull()) != null) {
+            faceBuffer.add(face);
+        }
+        sortBuffer();
+    }
+
+    private void sortBuffer() {
+        faceBuffer.sort(Comparator.comparingDouble(this::averageDepth).reversed());
+        sortedIterator = faceBuffer.iterator();
     }
 
     private double averageDepth(Face face) {
