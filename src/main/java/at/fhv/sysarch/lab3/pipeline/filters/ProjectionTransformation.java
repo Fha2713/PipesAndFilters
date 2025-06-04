@@ -1,14 +1,15 @@
 package at.fhv.sysarch.lab3.pipeline.filters;
 
-import at.fhv.sysarch.lab3.obj.ColorFace;
 import at.fhv.sysarch.lab3.obj.Face;
+import at.fhv.sysarch.lab3.pipeline.data.Pair;
 import com.hackoeur.jglm.Mat4;
 import com.hackoeur.jglm.Vec4;
+import javafx.scene.paint.Color;
 
-public class ProjectionTransformation implements IPushFilter<ColorFace>{
+public class ProjectionTransformation implements IPushFilter<Pair<Face, Color>> {
 
     private final Mat4 projMatrix;
-    private IPushFilter<ColorFace> successor;
+    private IPushFilter<Pair<Face, Color>> successor;
 
     public ProjectionTransformation(Mat4 projMatrix) {
         this.projMatrix = projMatrix;
@@ -16,21 +17,20 @@ public class ProjectionTransformation implements IPushFilter<ColorFace>{
 
     @Override
     public void setSuccessor(IPushFilter<?> successor) {
-        this.successor = (IPushFilter<ColorFace>) successor;
+        this.successor = (IPushFilter<Pair<Face, Color>>) successor;
     }
 
     @Override
-    public void push(ColorFace cf) {
-        // Vertices transformieren (view → clip space)
-        Vec4 v1 = projMatrix.multiply(cf.getFace().getV1());
-        Vec4 v2 = projMatrix.multiply(cf.getFace().getV2());
-        Vec4 v3 = projMatrix.multiply(cf.getFace().getV3());
+    public void push(Pair<Face, Color> input) {
+        Face face = input.fst();
+        Color color = input.snd();
 
-        // Normalen bleiben unverändert (nicht projiziert)
-        Face transformed = new Face(v1, v2, v3, cf.getFace().getN1(), cf.getFace().getN2(), cf.getFace().getN3());
+        Vec4 v1 = projMatrix.multiply(face.getV1());
+        Vec4 v2 = projMatrix.multiply(face.getV2());
+        Vec4 v3 = projMatrix.multiply(face.getV3());
 
-        ColorFace result = new ColorFace(transformed, cf.getColor(), cf.getIntensity());
+        Face transformed = new Face(v1, v2, v3, face.getN1(), face.getN2(), face.getN3());
 
-        successor.push(result);
+        successor.push(new Pair<>(transformed, color));
     }
 }

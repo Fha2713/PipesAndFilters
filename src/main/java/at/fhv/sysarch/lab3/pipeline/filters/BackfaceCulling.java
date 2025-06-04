@@ -13,20 +13,27 @@ public class BackfaceCulling implements IPushFilter<Face> {
     }
 
     @Override
-    public void push(Face f) {
-        // Normale des Dreiecks in View-Space (vorausgesetzt vom Vorgänger-Filter)
-        Vec3 normal = f.getN1().toVec3();  // alle 3 Normalen sind bei flacher Shading identisch
+    public void push(Face face) {
+        if (isFaceVisible(face)) {
+            if (successor != null) {
+                successor.push(face);
+            }
+        }
+        // sonst: cull – nichts weitergeben
+    }
 
-        // Blickrichtung ist (0, 0, -1) in View Space
+    private boolean isFaceVisible(Face face) {
+        Vec3 v1 = face.getV1().toVec3();
+        Vec3 v2 = face.getV2().toVec3();
+        Vec3 v3 = face.getV3().toVec3();
+
+        // Dreiecksnormalen-Vektor berechnen
+        Vec3 normal = v2.subtract(v1).cross(v3.subtract(v1)).getUnitVector();
+
+        // Blickrichtung in View-Space ist entlang -Z
         Vec3 viewDir = new Vec3(0, 0, -1);
 
-        // Prüfe Dot-Produkt
-        float dot = normal.dot(viewDir);
-
-        if (dot < 0) {
-            // Fläche zeigt zur Kamera → weiterverarbeiten
-            successor.push(f);
-        }
-        // sonst: wird ignoriert (gecullt)
+        // Sichtbar, wenn der Winkel spitz ist → dot < 0
+        return normal.dot(viewDir) < 0;
     }
 }

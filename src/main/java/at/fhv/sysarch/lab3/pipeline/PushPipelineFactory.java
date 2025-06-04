@@ -4,6 +4,7 @@ import at.fhv.sysarch.lab3.animation.AnimationRenderer;
 import at.fhv.sysarch.lab3.obj.Model;
 import at.fhv.sysarch.lab3.pipeline.filters.*;
 import com.hackoeur.jglm.Mat4;
+import com.hackoeur.jglm.Vec4;
 import javafx.animation.AnimationTimer;
 
 public class PushPipelineFactory {
@@ -14,34 +15,34 @@ public class PushPipelineFactory {
         // TODO 2. perform backface culling in VIEW SPACE
         // TODO 3. perform depth sorting in VIEW SPACE
         ModelData modelData = new ModelData();
-        ModelTransformation modelTransform = new ModelTransformation();
-        ViewingTransformation viewTransform = new ViewingTransformation();
+        ModelViewTransformation modelViewTransform = new ModelViewTransformation();
         BackfaceCulling backfaceCulling = new BackfaceCulling();
         DepthSorting depthSorting = new DepthSorting();
-        Coloring coloring = new Coloring(pd.getModelColor());
-        Lighting lighting = new Lighting(pd.getLightPos());
+        FlatShading flatShading = new FlatShading(pd.getLightPos(), pd.getModelColor());
         ProjectionTransformation projectionTransformation = new ProjectionTransformation(pd.getProjTransform());
+        //ScreenSpaceTransformation screenSpaceTransformation = new ScreenSpaceTransformation(pd.getViewportTransform(), pd.getViewHeight());
         PerspectiveDivision perspectiveDivision = new PerspectiveDivision();
-        ViewportTransformation viewportTransformation = new ViewportTransformation(pd.getViewTransform(), pd.getViewHeight());
+        ViewportTransformation viewportTransformation = new ViewportTransformation(pd.getViewportTransform(), pd.getViewHeight());
 
         Renderer renderer = new Renderer(pd.getGraphicsContext(), pd.getRenderingMode());
 
         // TODO 4. add coloring (space unimportant)
 
-        modelData.setSuccessor(modelTransform);
-        modelTransform.setSuccessor(viewTransform);
-        viewTransform.setSuccessor(backfaceCulling);
+        modelData.setSuccessor(modelViewTransform);
+        modelViewTransform.setSuccessor(backfaceCulling);
         backfaceCulling.setSuccessor(depthSorting);
+
         // lighting can be switched on/off
         if (pd.isPerformLighting()) {
-            depthSorting.setSuccessor(coloring);
-            coloring.setSuccessor(lighting);
-            lighting.setSuccessor(projectionTransformation);
+            depthSorting.setSuccessor(flatShading);
+            flatShading.setSuccessor(projectionTransformation);
         } else {
-            depthSorting.setSuccessor(coloring);
-            coloring.setSuccessor(projectionTransformation);
+            depthSorting.setSuccessor(flatShading);
+            flatShading.setSuccessor(projectionTransformation);
         }
         projectionTransformation.setSuccessor(perspectiveDivision);
+        //screenSpaceTransformation.setSuccessor(renderer);
+
         perspectiveDivision.setSuccessor(viewportTransformation);
         viewportTransformation.setSuccessor(renderer);
 
@@ -66,10 +67,21 @@ public class PushPipelineFactory {
              */
             @Override
             protected void render(float fraction, Model model) {
-                rotation += (float) (fraction * 2 * Math.PI / 10) % 360;
-                Mat4 rotated = modelTransform.rotate(rotation, pd.getModelRotAxis());
-                Mat4 translated = modelTransform.translate(rotated, pd.getModelTranslation());
-                modelTransform.viewTranslate(translated, pd.getViewTransform());
+                rotation += (float) (fraction * 2 * Math.PI / 10);
+
+                Mat4 scaleMatrix = new Mat4(
+                        new Vec4(0.8f, 0f, 0f, 0f),
+                        new Vec4(0f, 0.8f, 0f, 0f),
+                        new Vec4(0f, 0f, 0.8f, 0f),
+                        new Vec4(0f, 0f, 0f, 1f)
+                );
+
+                Mat4 rotated = modelViewTransform.rotate(rotation, pd.getModelRotAxis());
+                Mat4 modelMatrix = pd.getModelTranslation().multiply(rotated).multiply(scaleMatrix);
+                Mat4 modelViewMatrix = pd.getViewTransform().multiply(modelMatrix);
+
+                modelViewTransform.setModelViewMatrix(modelViewMatrix);
+
                 modelData.run(model);
                 depthSorting.flush();
 

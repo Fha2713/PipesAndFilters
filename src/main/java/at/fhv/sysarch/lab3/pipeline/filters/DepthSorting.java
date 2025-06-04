@@ -8,7 +8,7 @@ import java.util.List;
 
 public class DepthSorting implements IPushFilter<Face> {
 
-    private final List<Face> buffer = new ArrayList<>();
+    private final List<Face> faceBuffer = new ArrayList<>();
     private IPushFilter<Face> successor;
 
     @Override
@@ -17,23 +17,24 @@ public class DepthSorting implements IPushFilter<Face> {
     }
 
     @Override
-    public void push(Face f) {
-        buffer.add(f);
+    public void push(Face face) {
+        faceBuffer.add(face);  // Nur zwischenspeichern
     }
 
-    // Muss am Ende eines Frames aufgerufen werden!
+    /**
+     * Diese Methode muss explizit vom aufrufenden System pro Frame aufgerufen werden.
+     */
     public void flush() {
-        buffer.stream()
-                .sorted(Comparator.comparingDouble(this::averageZ).reversed()) // von hinten nach vorne
-                .forEach(successor::push);
-
-        buffer.clear(); // wichtig für nächsten Frame!
+        faceBuffer.sort(Comparator.comparingDouble(this::averageDepth).reversed());
+        for (Face face : faceBuffer) {
+            if (successor != null) {
+                successor.push(face);
+            }
+        }
+        faceBuffer.clear();
     }
 
-    private double averageZ(Face face) {
-        double z1 = face.getV1().getZ();
-        double z2 = face.getV2().getZ();
-        double z3 = face.getV3().getZ();
-        return (z1 + z2 + z3) / 3.0;
+    private double averageDepth(Face face) {
+        return (face.getV1().getZ() + face.getV2().getZ() + face.getV3().getZ()) / 3.0;
     }
 }

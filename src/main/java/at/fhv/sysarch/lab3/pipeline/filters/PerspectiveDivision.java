@@ -1,39 +1,34 @@
 package at.fhv.sysarch.lab3.pipeline.filters;
 
-import at.fhv.sysarch.lab3.obj.ColorFace;
 import at.fhv.sysarch.lab3.obj.Face;
+import at.fhv.sysarch.lab3.pipeline.data.Pair;
 import com.hackoeur.jglm.Vec4;
+import javafx.scene.paint.Color;
 
-public class PerspectiveDivision implements IPushFilter<ColorFace>{
+public class PerspectiveDivision implements IPushFilter<Pair<Face, Color>> {
 
-    private IPushFilter<ColorFace> successor;
+    private IPushFilter<Pair<Face, Color>> successor;
 
     @Override
     public void setSuccessor(IPushFilter<?> successor) {
-        this.successor = (IPushFilter<ColorFace>) successor;
+        this.successor = (IPushFilter<Pair<Face, Color>>) successor;
     }
 
     @Override
-    public void push(ColorFace cf) {
-        Face f = cf.getFace();
+    public void push(Pair<Face, Color> input) {
+        Face face = input.fst();
+        Color color = input.snd();
 
-        Vec4 v1 = divideByW(f.getV1());
-        Vec4 v2 = divideByW(f.getV2());
-        Vec4 v3 = divideByW(f.getV3());
+        Vec4 v1 = divideByW(face.getV1());
+        Vec4 v2 = divideByW(face.getV2());
+        Vec4 v3 = divideByW(face.getV3());
 
-        Face divided = new Face(v1, v2, v3, f.getN1(), f.getN2(), f.getN3());
-
-        ColorFace result = new ColorFace(divided, cf.getColor(), cf.getIntensity());
-        successor.push(result);
+        Face divided = new Face(v1, v2, v3, face.getN1(), face.getN2(), face.getN3());
+        successor.push(new Pair<>(divided, color));
     }
 
     private Vec4 divideByW(Vec4 v) {
         float w = v.getW();
-        return new Vec4(
-                v.getX() / w,
-                v.getY() / w,
-                v.getZ() / w,
-                1f
-        );
+        return new Vec4(v.getX() / w, v.getY() / w, v.getZ() / w, 1f);
     }
 }

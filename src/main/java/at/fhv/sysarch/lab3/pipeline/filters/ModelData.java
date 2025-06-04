@@ -20,6 +20,4 @@ public class ModelData implements IPushFilter<Void> {
     public void run(Model model) {
         model.getFaces().forEach(successor::push);
     }
-
-
 }
