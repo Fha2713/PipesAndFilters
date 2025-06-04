@@ -36,5 +36,4 @@ public class DepthSorting implements IPushFilter<Face> {
         double z3 = face.getV3().getZ();
         return (z1 + z2 + z3) / 3.0;
     }
-
 }

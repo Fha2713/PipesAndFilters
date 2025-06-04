@@ -11,9 +11,9 @@ public class ViewingTransformation implements IPushFilter<Face> {
 
     public ViewingTransformation() {
         this.viewMatrix = Matrices.lookAt(
-                new Vec3(0, 0, 800),   // Kamera weiter zurück
-                new Vec3(-300, -150, 0),     // Blickrichtung auf Ursprung (Teekanne)
-                new Vec3(0, 10, 0)      // Up-Vektor: Y-Achse
+                new Vec3(0, 0, 600),   // Kamera weiter zurück
+                new Vec3(0, 0, 0),     // Blickrichtung auf Ursprung (Teekanne)
+                new Vec3(0, 1, 0)      // Up-Vektor: Y-Achse
         );    }
 
     @Override

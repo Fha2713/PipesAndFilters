@@ -19,40 +19,35 @@ public class PushPipelineFactory {
         BackfaceCulling backfaceCulling = new BackfaceCulling();
         DepthSorting depthSorting = new DepthSorting();
         Coloring coloring = new Coloring(pd.getModelColor());
+        Lighting lighting = new Lighting(pd.getLightPos());
+        ProjectionTransformation projectionTransformation = new ProjectionTransformation(pd.getProjTransform());
+        PerspectiveDivision perspectiveDivision = new PerspectiveDivision();
+        ViewportTransformation viewportTransformation = new ViewportTransformation(pd.getViewTransform(), pd.getViewHeight());
 
-        Renderer renderer = new Renderer(pd.getGraphicsContext(), pd.getModelColor());
+        Renderer renderer = new Renderer(pd.getGraphicsContext(), pd.getRenderingMode());
 
         // TODO 4. add coloring (space unimportant)
+
+        modelData.setSuccessor(modelTransform);
+        modelTransform.setSuccessor(viewTransform);
+        viewTransform.setSuccessor(backfaceCulling);
+        backfaceCulling.setSuccessor(depthSorting);
         // lighting can be switched on/off
         if (pd.isPerformLighting()) {
-
-            Lighting lighting = new Lighting(pd.getLightPos());
-
-            modelData.setSuccessor(modelTransform);
-            modelTransform.setSuccessor(viewTransform);
-            viewTransform.setSuccessor(backfaceCulling);
-            backfaceCulling.setSuccessor(depthSorting);
             depthSorting.setSuccessor(coloring);
             coloring.setSuccessor(lighting);
-            lighting.setSuccessor(renderer);
-
-
-
-            // 4a. TODO perform lighting in VIEW SPACE
-            // 5. TODO perform projection transformation on VIEW SPACE coordinates
+            lighting.setSuccessor(projectionTransformation);
         } else {
-
-            modelData.setSuccessor(modelTransform);
-            modelTransform.setSuccessor(viewTransform);
-            viewTransform.setSuccessor(backfaceCulling);
-            backfaceCulling.setSuccessor(depthSorting);
             depthSorting.setSuccessor(coloring);
-            coloring.setSuccessor(renderer);
-
-
-            // 5. TODO perform projection transformation
+            coloring.setSuccessor(projectionTransformation);
         }
+        projectionTransformation.setSuccessor(perspectiveDivision);
+        perspectiveDivision.setSuccessor(viewportTransformation);
+        viewportTransformation.setSuccessor(renderer);
 
+        // 4a. TODO perform lighting in VIEW SPACE
+        // 5. TODO perform projection transformation on VIEW SPACE coordinates
+        // 5. TODO perform projection transformation
         // TODO 6. perform perspective division to screen coordinates
         // TODO 7. feed into the sink (renderer)
 
