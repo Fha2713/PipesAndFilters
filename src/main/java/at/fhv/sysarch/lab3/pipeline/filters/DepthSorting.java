@@ -67,7 +67,7 @@ public class DepthSorting implements IPushFilter<Face>, IPullFilter<Face> {
     }
 
     private void sortBuffer() {
-        faceBuffer.sort(Comparator.comparingDouble(this::averageDepth).reversed());
+        faceBuffer.sort(Comparator.comparingDouble(this::averageDepth));
         sortedIterator = faceBuffer.iterator();
     }
 
