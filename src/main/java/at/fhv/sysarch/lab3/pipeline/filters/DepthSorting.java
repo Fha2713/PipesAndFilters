@@ -15,7 +15,6 @@ public class DepthSorting implements IPushFilter<Face>, IPullFilter<Face> {
 
     private Iterator<Face> sortedIterator = null;
 
-    // === Push ===
     @Override
     public void setSuccessor(IPushFilter<?> successor) {
         this.successor = (IPushFilter<Face>) successor;
@@ -26,19 +25,6 @@ public class DepthSorting implements IPushFilter<Face>, IPullFilter<Face> {
         faceBuffer.add(face);  // Zwischenspeichern
     }
 
-    public void flush() {
-        sortBuffer();
-        while (sortedIterator.hasNext()) {
-            Face face = sortedIterator.next();
-            if (successor != null) {
-                successor.push(face);
-            }
-        }
-        faceBuffer.clear();
-        sortedIterator = null;
-    }
-
-    // === Pull ===
     @Override
     public void setPredecessor(IPullFilter<?> predecessor) {
         this.predecessor = (IPullFilter<Face>)predecessor;
@@ -53,6 +39,18 @@ public class DepthSorting implements IPushFilter<Face>, IPullFilter<Face> {
         return (sortedIterator != null && sortedIterator.hasNext())
                 ? sortedIterator.next()
                 : null;
+    }
+
+    public void flush() {
+        sortBuffer();
+        while (sortedIterator.hasNext()) {
+            Face face = sortedIterator.next();
+            if (successor != null) {
+                successor.push(face);
+            }
+        }
+        faceBuffer.clear();
+        sortedIterator = null;
     }
 
     private void fillAndSortFromPredecessor() {

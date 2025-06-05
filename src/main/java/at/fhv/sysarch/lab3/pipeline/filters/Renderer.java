@@ -19,10 +19,9 @@ public class Renderer implements IPushFilter<Pair<Face, Color>>, IPullFilter<Pai
         this.renderingMode = mode;
     }
 
-    // --- Push ---
     @Override
     public void setSuccessor(IPushFilter<?> successor) {
-        // Renderer ist Sink -> kein Nachfolger
+        throw new UnsupportedOperationException("Renderer is a sink");
     }
 
     @Override
@@ -30,7 +29,6 @@ public class Renderer implements IPushFilter<Pair<Face, Color>>, IPullFilter<Pai
         drawFace(input.fst(), input.snd());
     }
 
-    // --- Pull ---
     @Override
     public void setPredecessor(IPullFilter<?> predecessor) {
         this.predecessor = (IPullFilter<Pair<Face, Color>>) predecessor;
@@ -45,7 +43,6 @@ public class Renderer implements IPushFilter<Pair<Face, Color>>, IPullFilter<Pai
         return input;
     }
 
-    // === Zeichenmethode ===
     private void drawFace(Face face, Color color) {
         Vec2 v1 = toScreenCoordinates(face.getV1());
         Vec2 v2 = toScreenCoordinates(face.getV2());

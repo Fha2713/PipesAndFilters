@@ -9,16 +9,13 @@ import javafx.scene.paint.Color;
 public class ViewportTransformation implements IPushFilter<Pair<Face, Color>>, IPullFilter<Pair<Face, Color>> {
 
     private final Mat4 viewportTransform;
-    private final float viewportHeight;
     private IPushFilter<Pair<Face, Color>> successor;
     private IPullFilter<Pair<Face, Color>> predecessor;
 
-    public ViewportTransformation(Mat4 viewportTransform, float viewportHeight) {
+    public ViewportTransformation(Mat4 viewportTransform) {
         this.viewportTransform = viewportTransform;
-        this.viewportHeight = viewportHeight;
     }
 
-    // Push-Teil
     @Override
     public void setSuccessor(IPushFilter<?> successor) {
         this.successor = (IPushFilter<Pair<Face, Color>>) successor;
@@ -32,7 +29,6 @@ public class ViewportTransformation implements IPushFilter<Pair<Face, Color>>, I
         }
     }
 
-    // Pull-Teil
     @Override
     public void setPredecessor(IPullFilter<?> predecessor) {
         this.predecessor = (IPullFilter<Pair<Face, Color>>) predecessor;
@@ -48,7 +44,6 @@ public class ViewportTransformation implements IPushFilter<Pair<Face, Color>>, I
         return transform(input);
     }
 
-    // Transformation (gleich für push und pull)
     private Pair<Face, Color> transform(Pair<Face, Color> input) {
         Face f = input.fst();
         Color c = input.snd();

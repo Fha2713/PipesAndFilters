@@ -9,15 +9,6 @@ public class ModelViewTransformation implements IPushFilter<Face>, IPullFilter<F
     private IPushFilter<Face> successor;
     private IPullFilter<Face> predecessor;
 
-    public void setModelViewMatrix(Mat4 modelViewMatrix) {
-        this.modelViewMatrix = modelViewMatrix;
-    }
-
-    public Mat4 rotate(float rad, Vec3 modelRotAxis) {
-        return Matrices.rotate(rad, modelRotAxis);
-    }
-
-    // --- Push ---
     @Override
     public void setSuccessor(IPushFilter<?> successor) {
         this.successor = (IPushFilter<Face>) successor;
@@ -33,7 +24,6 @@ public class ModelViewTransformation implements IPushFilter<Face>, IPullFilter<F
         successor.push(transformed);
     }
 
-    // --- Pull ---
     @Override
     public void setPredecessor(IPullFilter<?> predecessor) {
         this.predecessor = (IPullFilter<Face>) predecessor;
@@ -49,5 +39,13 @@ public class ModelViewTransformation implements IPushFilter<Face>, IPullFilter<F
         Vec4 v3 = modelViewMatrix.multiply(face.getV3());
 
         return new Face(v1, v2, v3, face.getN1(), face.getN2(), face.getN3());
+    }
+
+    public void setModelViewMatrix(Mat4 modelViewMatrix) {
+        this.modelViewMatrix = modelViewMatrix;
+    }
+
+    public Mat4 rotate(float rad, Vec3 modelRotAxis) {
+        return Matrices.rotate(rad, modelRotAxis);
     }
 }
